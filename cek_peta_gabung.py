@@ -233,12 +233,13 @@ sub = tidy[tidy["Provinsi"] == prov_pick].sort_values("Tahun")
 c1, c2 = st.columns(2)
 with c1:
     st.markdown("**Anomali SST**")
-    st.line_chart(sub.set_index("Tahun")[["Anomali_SST"]])
+    st.bar_chart(sub.set_index("Tahun")[["Anomali_SST"]])
 with c2:
     st.markdown("**Anomali Curah Hujan (CH)**")
-    st.line_chart(sub.set_index("Tahun")[["Anomali_Hujan"]])
+    st.bar_chart(sub.set_index("Tahun")[["Anomali_Hujan"]])
 
 st.markdown("**Anomali Produktivitas**")
-st.line_chart(sub.set_index("Tahun")[["Anomali_Produktivitas"]])
+st.bar_chart(sub.set_index("Tahun")[["Anomali_Produktivitas"]])
+
 
 
