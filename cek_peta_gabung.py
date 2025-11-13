@@ -241,4 +241,4 @@ with c2:
 st.markdown("**Anomali Produktivitas**")
 st.line_chart(sub.set_index("Tahun")[["Anomali_Produktivitas"]])
 
-st.caption("Catatan: r = korelasi Pearson antar-anomali; NaN jika data valid < 3.")
+
