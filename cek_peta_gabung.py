@@ -11,7 +11,7 @@ from branca.colormap import linear
 from branca.element import Template, MacroElement
 
 st.set_page_config(page_title="Peta Korelasi ENSO–Hujan–Produktivitas", layout="wide")
-st.title("Peta Interaktif Korelasi (r) – ENSO, Curah Hujan, Produktivitas Padi")
+st.title("Peta Interaktif Korelasi (r) – Anomali SST, Anomali Curah Hujan, Anomali Produktivitas Padi")
 st.caption("Upload Excel **Project_Aktualisasi.xlsx** (sheet **Gabung**). Pilih jenis korelasi di dropdown.")
 
 # =========================
@@ -108,7 +108,7 @@ for prov in prov_list:
         pearson_r(sub["Anomali_SST"],   sub["Anomali_Hujan"]),          # SST–Hujan
         pearson_r(sub["Anomali_Hujan"], sub["Anomali_Produktivitas"]),  # Hujan–Prod
     ])
-corr_df = pd.DataFrame(rows, columns=["Provinsi","SST_Produktivitas","SST_Hujan","Hujan_Produktivitas"])
+corr_df = pd.DataFrame(rows, columns=["Provinsi","Anomali SST & Anomali Produktivitas","Anomali SST & Anomali Curah Hujan","Anomali Curah Hujan & Anomali Produktivitas"])
 
 with st.expander("Tabel korelasi (r) per provinsi"):
     st.dataframe(corr_df, use_container_width=True)
@@ -153,14 +153,14 @@ if missing:
 st.subheader("Peta – pilih korelasi yang ditampilkan")
 choice = st.selectbox(
     "Jenis korelasi:",
-    ["SST ↔ Produktivitas", "SST ↔ Curah Hujan", "Curah Hujan ↔ Produktivitas"],
+    ["Anomali SST ↔ Anomali Produktivitas", "Anomali SST ↔ Anomali Curah Hujan", "Anomali Curah Hujan ↔ Anomali Produktivitas"],
     index=0
 )
 
 colmap = {
-    "SST ↔ Produktivitas": ("SST_Produktivitas", "Korelasi SST vs Produktivitas"),
-    "SST ↔ Curah Hujan": ("SST_Hujan", "Korelasi SST vs Hujan"),
-    "Curah Hujan ↔ Produktivitas": ("Hujan_Produktivitas", "Korelasi Hujan vs Produktivitas"),
+    "Anomali SST ↔ Anomali Produktivitas": ("Anomali SST & Anomali Produktivitas", "Anomali SST vs Anomali Produktivitas"),
+    "Anomali SST ↔ Anomali Curah Hujan": ("Anomali SST & Anomali Curah Hujan", "Anomali SST vs Anomali Curah Hujan"),
+    "Anomali Curah Hujan ↔ Anomali Produktivitas": ("Anomali Curah Hujan & Anomali Produktivitas", "Anomali Curah Hujan vs Anomali Produktivitas"),
 }
 colname, layer_title = colmap[choice]
 
