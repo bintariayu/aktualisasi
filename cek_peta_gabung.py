@@ -1,4 +1,4 @@
-# cek_peta_gabung.py (diperbarui untuk menampilkan 3 grafik variabel terpisah dalam popup)
+#aktualisasi bintari
 
 import re
 import numpy as np
@@ -6,17 +6,17 @@ import pandas as pd
 import streamlit as st
 from streamlit_folium import st_folium
 import folium
-from folium import Map, CircleMarker, FeatureGroup, LayerControl, Popup, IFrame
+from folium import Map, CircleMarker, FeatureGroup, LayerControl
 from branca.colormap import linear
 from branca.element import Template, MacroElement
-import matplotlib.pyplot as plt
-import base64
-from io import BytesIO
 
 st.set_page_config(page_title="Peta Korelasi ENSO–Hujan–Produktivitas", layout="wide")
-st.title("Peta Interaktif Korelasi (r) – ENSO, Curah Hujan, Produktivitas Padi")
+st.title("Peta Interaktif Korelasi (r) – ENSO wilayah Nino 3.4, Curah Hujan, Produktivitas Padi")
 st.caption("Upload Excel **Project_Aktualisasi.xlsx** (sheet **Gabung**). Pilih jenis korelasi di dropdown.")
 
+# =========================
+# 1) Upload Excel (wajib)
+# =========================
 uploaded = st.file_uploader("Upload file Excel (.xlsx) – gunakan file *Project_Aktualisasi.xlsx*", type=["xlsx"])
 if uploaded is None:
     st.info("Silakan upload file Excel terlebih dahulu.")
@@ -34,6 +34,9 @@ except Exception as e:
     st.error(f"Gagal membaca sheet **{SHEET_NAME}** dari file yang diupload.\n\nDetail: {e}")
     st.stop()
 
+# =========================
+# 2) Parse sheet "Gabung"
+# =========================
 def parse_blocks(raw_df: pd.DataFrame) -> pd.DataFrame:
     blocks = []
     i, n = 0, len(raw_df)
@@ -72,11 +75,14 @@ def parse_blocks(raw_df: pd.DataFrame) -> pd.DataFrame:
         else:
             i += 1
 
-    df = pd.DataFrame(blocks, columns=["Provinsi","Tahun","ENSO","Curah Hujan","Produktivitas"])
+    if not blocks:
+        return pd.DataFrame(columns=["Provinsi","Tahun","Anomali_SST","Anomali_Hujan","Anomali_Produktivitas"])
+
+    df = pd.DataFrame(blocks, columns=["Provinsi","Tahun","Anomali_SST","Anomali_Hujan","Anomali_Produktivitas"])
     df["Provinsi"] = df["Provinsi"].astype(str).str.strip()
     df = df[df["Provinsi"] != ""].drop_duplicates().dropna(subset=["Tahun"])
     df["Tahun"] = df["Tahun"].astype(int)
-    for c in ["ENSO","Curah Hujan","Produktivitas"]:
+    for c in ["Anomali_SST","Anomali_Hujan","Anomali_Produktivitas"]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
     return df.sort_values(["Provinsi","Tahun"]).reset_index(drop=True)
 
@@ -85,6 +91,9 @@ if tidy.empty:
     st.error("Parser tidak menemukan blok provinsi di sheet 'Gabung'.")
     st.stop()
 
+# =========================
+# 3) Korelasi Pearson per provinsi
+# =========================
 def pearson_r(a: pd.Series, b: pd.Series):
     sub = pd.DataFrame({"a": a, "b": b}).dropna()
     return sub["a"].corr(sub["b"]) if len(sub) >= 3 else np.nan
@@ -95,12 +104,18 @@ for prov in prov_list:
     sub = tidy[tidy["Provinsi"] == prov]
     rows.append([
         prov,
-        pearson_r(sub["ENSO"], sub["Produktivitas"]),
-        pearson_r(sub["ENSO"], sub["Curah Hujan"]),
-        pearson_r(sub["Curah Hujan"], sub["Produktivitas"]),
+        pearson_r(sub["Anomali_SST"],   sub["Anomali_Produktivitas"]),  # SST–Prod
+        pearson_r(sub["Anomali_SST"],   sub["Anomali_Hujan"]),          # SST–Hujan
+        pearson_r(sub["Anomali_Hujan"], sub["Anomali_Produktivitas"]),  # Hujan–Prod
     ])
-corr_df = pd.DataFrame(rows, columns=["Provinsi","ENSO & Produktivitas","ENSO & Curah Hujan","Curah Hujan & Produktivitas"])
+corr_df = pd.DataFrame(rows, columns=["Provinsi","ENSO & Produktivitas","ENSO & Curah Hujan","Curah Hujan &  Produktivitas"])
 
+with st.expander("Tabel korelasi (r) per provinsi"):
+    st.dataframe(corr_df, use_container_width=True)
+
+# =========================
+# 4) Koordinat bawaan
+# =========================
 coords = {
     # Sumatera
     "Aceh": (95.3, 5.5), "Sumatera Utara": (99.1, 2.5), "Sumatera Barat": (100.5, -0.5),
@@ -128,6 +143,13 @@ corr_df["lon"] = corr_df["Provinsi"].map(lambda x: coords.get(x, (np.nan, np.nan
 corr_df["lat"] = corr_df["Provinsi"].map(lambda x: coords.get(x, (np.nan, np.nan))[1])
 plot_df = corr_df.dropna(subset=["lon","lat"]).copy()
 
+missing = corr_df[corr_df[["lon","lat"]].isna().any(axis=1)]["Provinsi"].tolist()
+if missing:
+    st.info("Provinsi tanpa koordinat (tidak tampil di peta): " + ", ".join(missing))
+
+# =========================
+# 5) Peta interaktif + legend bernomor
+# =========================
 st.subheader("Peta – pilih korelasi yang ditampilkan")
 choice = st.selectbox(
     "Jenis korelasi:",
@@ -149,43 +171,75 @@ fg = FeatureGroup(name=layer_title, show=True)
 for _, r in plot_df.iterrows():
     val = r[colname]
     color = cmap(val if np.isfinite(val) else 0.0)
-    sub = tidy[tidy["Provinsi"] == r["Provinsi"]]
-    sub = sub.sort_values("Tahun")
-    fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(4, 6))
-    axs[0].bar(sub["Tahun"], sub["ENSO"], color="steelblue"); axs[0].set_title("ENSO", fontsize=8)
-    axs[1].bar(sub["Tahun"], sub["Curah Hujan"], color="forestgreen"); axs[1].set_title("Curah Hujan", fontsize=8)
-    axs[2].bar(sub["Tahun"], sub["Produktivitas"], color="peru"); axs[2].set_title("Produktivitas", fontsize=8)
-    for ax in axs: ax.tick_params(labelsize=6)
-    plt.tight_layout()
-    buf = BytesIO(); plt.savefig(buf, format="png"); plt.close(fig)
-    data_uri = base64.b64encode(buf.getvalue()).decode("utf-8")
-    html = f'<img src="data:image/png;base64,{data_uri}" width="300">'
-    popup = Popup(IFrame(html, width=310, height=460), max_width=320)
+    val_txt = "NaN" if not np.isfinite(val) else f"{val:.3f}"
     CircleMarker(
         location=(r["lat"], r["lon"]),
         radius=9, color="black", weight=1,
         fill=True, fill_opacity=0.88, fill_color=color,
-        tooltip=f"{r['Provinsi']} | r={val:.3f}",
-        popup=popup,
+        tooltip=f"{r['Provinsi']} | r={val_txt}",
+        popup=folium.Popup(f"<b>{r['Provinsi']}</b><br>{layer_title}<br>r = {val_txt}", max_width=320),
     ).add_to(fg)
 fg.add_to(m)
 LayerControl(position="topleft").add_to(m)
 
-add_static_legend = lambda m, title, cmap_obj: ...  # isi tetap
-add_map_title = lambda m, text: ...  # isi tetap
+# Legend dengan warna + angka yang kontras
+def add_static_legend(m, title, cmap_obj):
+    ticks = [-1.0, -0.6, -0.2, 0.0, 0.2, 0.6, 1.0]
+    patches = "".join(
+        f"<div style='display:flex;align-items:center;margin-bottom:6px;'>"
+        f"<span style='display:inline-block;width:22px;height:14px;background:{cmap_obj(t)};"
+        f"border:1px solid #888;margin-right:8px;'></span>"
+        f"<span style='min-width:42px;display:inline-block;color:#111;font-weight:600;'>{t:+.1f}</span></div>"
+        for t in ticks
+    )
+    legend_html = f"""
+    {{% macro html(this, kwargs) %}}
+    <div style="
+        position: fixed; top: 10px; right: 10px; z-index: 9999;
+        background: #ffffff; border: 1px solid #888; border-radius: 6px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.25);
+        padding: 10px 12px; font-size: 13px; color:#111;">
+      <div style="font-weight:700; margin-bottom:6px;">Legenda</div>
+      <div style="margin-bottom:6px;">Koefisien Korelasi (r)</div>
+      <div>{patches}</div>
+    </div>
+    {{% endmacro %}}
+    """
+    macro = MacroElement(); macro._template = Template(legend_html)
+    m.get_root().add_child(macro)
+
+def add_map_title(m, text):
+    title_html = f'''
+      <div style="position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+                  background: rgba(255,255,255,0.95); border: 1px solid #888; border-radius: 8px;
+                  padding: 8px 16px; font-size: 18px; font-weight: 700; color: #111; z-index: 9999;">
+        {text}
+      </div>
+    '''
+    m.get_root().html.add_child(folium.Element(title_html))
+
 add_map_title(m, layer_title)
 add_static_legend(m, "Legenda", cmap)
+
 st_folium(m, width=None, height=650)
 
+# =========================
+# 6) Grafik deret waktu per provinsi
+# =========================
+st.subheader("Grafik Deret Waktu Anomali per Provinsi")
 prov_pick = st.selectbox("Pilih provinsi:", prov_list)
 sub = tidy[tidy["Provinsi"] == prov_pick].sort_values("Tahun")
 
 c1, c2 = st.columns(2)
 with c1:
-    st.markdown("**ENSO**")
-    st.bar_chart(sub.set_index("Tahun")[["ENSO"]])
+    st.markdown("**Anomali SST**")
+    st.bar_chart(sub.set_index("Tahun")[["Anomali_SST"]])
 with c2:
-    st.markdown("**Curah Hujan**")
-    st.bar_chart(sub.set_index("Tahun")[["Curah Hujan"]])
-st.markdown("**Produktivitas**")
-st.bar_chart(sub.set_index("Tahun")[["Produktivitas"]])
+    st.markdown("**Anomali Curah Hujan (CH)**")
+    st.bar_chart(sub.set_index("Tahun")[["Anomali_Hujan"]])
+
+st.markdown("**Anomali Produktivitas**")
+st.bar_chart(sub.set_index("Tahun")[["Anomali_Produktivitas"]])
+
+
+
