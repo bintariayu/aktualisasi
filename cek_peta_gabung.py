@@ -108,7 +108,7 @@ for prov in prov_list:
         pearson_r(sub["Anomali_SST"],   sub["Anomali_Hujan"]),          # SST–Hujan
         pearson_r(sub["Anomali_Hujan"], sub["Anomali_Produktivitas"]),  # Hujan–Prod
     ])
-corr_df = pd.DataFrame(rows, columns=["Provinsi","Anomali SST & Anomali Produktivitas","Anomali SST & Anomali Curah Hujan","Anomali Curah Hujan & Anomali Produktivitas"])
+corr_df = pd.DataFrame(rows, columns=["Provinsi","ENSO & Produktivitas","ENSO & Curah Hujan","Curah Hujan &  Produktivitas"])
 
 with st.expander("Tabel korelasi (r) per provinsi"):
     st.dataframe(corr_df, use_container_width=True)
@@ -153,14 +153,14 @@ if missing:
 st.subheader("Peta – pilih korelasi yang ditampilkan")
 choice = st.selectbox(
     "Jenis korelasi:",
-    ["Anomali SST ↔ Anomali Produktivitas", "Anomali SST ↔ Anomali Curah Hujan", "Anomali Curah Hujan ↔ Anomali Produktivitas"],
+    ["ENSO ↔ Produktivitas", "ENSO ↔ Curah Hujan", "Curah Hujan ↔ Produktivitas"],
     index=0
 )
 
 colmap = {
-    "Anomali SST ↔ Anomali Produktivitas": ("Anomali SST & Anomali Produktivitas", "Anomali SST vs Anomali Produktivitas"),
-    "Anomali SST ↔ Anomali Curah Hujan": ("Anomali SST & Anomali Curah Hujan", "Anomali SST vs Anomali Curah Hujan"),
-    "Anomali Curah Hujan ↔ Anomali Produktivitas": ("Anomali Curah Hujan & Anomali Produktivitas", "Anomali Curah Hujan vs Anomali Produktivitas"),
+    "ENSO ↔ Produktivitas": ("ENSO & Produktivitas", "ENSO vs Produktivitas"),
+    "ENSO ↔ Curah Hujan": ("ENSO & Curah Hujan", "ENSO vs Curah Hujan"),
+    "Curah Hujan ↔ Produktivitas": ("Curah Hujan & Produktivitas", "Curah Hujan vs Produktivitas"),
 }
 colname, layer_title = colmap[choice]
 
