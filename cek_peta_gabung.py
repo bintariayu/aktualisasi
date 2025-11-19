@@ -11,7 +11,7 @@ from branca.colormap import linear
 from branca.element import Template, MacroElement
 
 st.set_page_config(page_title="Peta Korelasi ENSO–Hujan–Produktivitas", layout="wide")
-st.title("Peta Interaktif Korelasi (r) – ENSO, Curah Hujan, Produktivitas Padi")
+st.title("Peta Interaktif Korelasi (r) – ENSO wilayah Nino 3.4, Curah Hujan, Produktivitas Padi")
 st.caption("Upload Excel **Project_Aktualisasi.xlsx** (sheet **Gabung**). Pilih jenis korelasi di dropdown.")
 
 # =========================
