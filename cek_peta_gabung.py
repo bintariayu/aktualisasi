@@ -153,7 +153,7 @@ if missing:
 st.subheader("Peta – pilih korelasi yang ditampilkan")
 choice = st.selectbox(
     "Jenis korelasi:",
-    ["ENSO ↔ Produktivitas", "ENSO ↔ Curah Hujan", "Curah Hujan ↔ Produktivitas"],
+    ["Anomali SST ↔ Anomali Produktivitas", "Anomali SST ↔ Anomali Curah Hujan", "Anomali Curah Hujan ↔ Anomali Produktivitas"],
     index=0
 )
 
