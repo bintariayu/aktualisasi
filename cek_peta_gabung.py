@@ -11,7 +11,7 @@ from branca.colormap import linear
 from branca.element import Template, MacroElement
 
 st.set_page_config(page_title="Peta Korelasi ENSO–Hujan–Produktivitas", layout="wide")
-st.title("Peta Interaktif Korelasi (r) – ENSO, Curah Hujan, Produktivitas Padi")
+st.title("Peta Interaktif Korelasi (r) – Anomali SST, Anomali Curah Hujan, Anomali Produktivitas Padi")
 st.caption("Upload Excel **Project_Aktualisasi.xlsx** (sheet **Gabung**). Pilih jenis korelasi di dropdown.")
 
 # =========================
@@ -153,13 +153,13 @@ if missing:
 st.subheader("Peta – pilih korelasi yang ditampilkan")
 choice = st.selectbox(
     "Jenis korelasi:",
-    ["Anomali SST (ENSO Nino 3.4) ↔ Anomali Produktivitas", "Anomali SST (ENSO Nino 3.4) ↔ Anomali Curah Hujan", "Anomali Curah Hujan ↔ Anomali Produktivitas"],
+    ["Anomali SST ↔ Anomali Produktivitas", "Anomali SST ↔ Anomali Curah Hujan", "Anomali Curah Hujan ↔ Anomali Produktivitas"],
     index=0
 )
 
 colmap = {
-    "Anomali SST (ENSO Nino 3.4) ↔ Anomali Produktivitas": ("Anomali SST (ENSO Nino 3.4) & Anomali Produktivitas", "Anomali SST (ENSO Nino 3.4) vs Anomali Produktivitas"),
-    "Anomali SST (ENSO Nino 3.4) ↔ Anomali Curah Hujan": ("Anomali SST (ENSO Nino 3.4) & Anomali Curah Hujan", "Anomali SST (ENSO Nino 3.4) vs Anomali Curah Hujan"),
+    "Anomali SST ↔ Anomali Produktivitas": ("Anomali SST & Anomali Produktivitas", "Anomali SST vs Anomali Produktivitas"),
+    "Anomali SST ↔ Anomali Curah Hujan": ("Anomali SST & Anomali Curah Hujan", "Anomali SST vs Anomali Curah Hujan"),
     "Anomali Curah Hujan ↔ Anomali Produktivitas": ("Anomali Curah Hujan & Anomali Produktivitas", "Anomali Curah Hujan vs Anomali Produktivitas"),
 }
 colname, layer_title = colmap[choice]
