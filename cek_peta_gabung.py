@@ -108,7 +108,7 @@ for prov in prov_list:
         pearson_r(sub["Anomali_SST"],   sub["Anomali_Hujan"]),          # SST–Hujan
         pearson_r(sub["Anomali_Hujan"], sub["Anomali_Produktivitas"]),  # Hujan–Prod
     ])
-corr_df = pd.DataFrame(rows, columns=["Provinsi","ENSO & Produktivitas","ENSO & Curah Hujan","Curah Hujan &  Produktivitas"])
+corr_df = pd.DataFrame(rows, columns=["Provinsi","ENSO & Produktivitas","ENSO & Curah Hujan","Curah Hujan & Produktivitas"])
 
 with st.expander("Tabel korelasi (r) per provinsi"):
     st.dataframe(corr_df, use_container_width=True)
